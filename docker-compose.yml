@@ -1,0 +1,12 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: url-shortener-db
+
+    environment:
+      POSTGRES_DB: url_shortener
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+
+    ports:
+      - "5432:5432"
