@@ -4,6 +4,8 @@ services:
     container_name: url-shortener-db
 
     environment:
+      TZ: UTC
+      PGTZ: UTC
       POSTGRES_DB: url_shortener
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
