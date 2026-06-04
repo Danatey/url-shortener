@@ -10,9 +10,7 @@ import java.util.UUID;
 
 public interface ShortUrlRepository extends JpaRepository<ShortUrl, UUID> {
 
+    List<ShortUrl> findAllByUserUsername(String username);
+
     Optional<ShortUrl> findByShortCode(String shortCode);
-
-    boolean existsByShortCode(String shortCode);
-
-    List<ShortUrl> findByUser(User user);
 }

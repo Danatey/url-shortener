@@ -9,6 +9,7 @@ services:
       POSTGRES_DB: url_shortener
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
 
     ports:
       - "5432:5432"

@@ -10,5 +10,9 @@ spring:
       jdbc:
         time_zone: UTC
 
+  jwt:
+    secret: ${JWT_SECRET:my-default-secret-key-my-default-secret-key}
+    expiration: 3600000
+
   flyway:
     enabled: true
