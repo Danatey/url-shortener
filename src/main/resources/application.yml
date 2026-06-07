@@ -5,13 +5,15 @@ spring:
     password: ${DB_PASSWORD:postgres}
 
   jpa:
+    properties:
+      hibernate.jdbc.time_zone: UTC
     hibernate:
       ddl-auto: validate
       jdbc:
         time_zone: UTC
 
   jwt:
-    secret: ${JWT_SECRET:my-default-secret-key-my-default-secret-key}
+    secret: ${JWT_SECRET}
     expiration: 3600000
 
   flyway:

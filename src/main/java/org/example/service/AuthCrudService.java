@@ -34,9 +34,11 @@ public class AuthCrudService implements AuthService {
 
     @Override
     public AuthResponseDto login(LoginRequestDto request) {
-
         User user = userRepository.findByUsername(request.getUsername())
                 .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+
+        System.out.println(passwordEncoder.encode(request.getPassword()));
+        System.out.println(passwordEncoder.encode(user.getPassword()));
 
         if (!passwordEncoder.matches(
                 request.getPassword(),

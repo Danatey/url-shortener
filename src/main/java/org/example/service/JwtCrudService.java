@@ -16,8 +16,8 @@ public class JwtCrudService implements JwtService {
     private final long expiration;
 
     public JwtCrudService(
-            @Value("${jwt.secret}") String secret,
-            @Value("${jwt.expiration}") long expiration
+            @Value("${spring.jwt.secret}") String secret,
+            @Value("${spring.jwt.expiration}") long expiration
     ) {
         this.key = Keys.hmacShaKeyFor(secret.getBytes());
         this.expiration = expiration;
@@ -25,7 +25,6 @@ public class JwtCrudService implements JwtService {
 
     @Override
     public String generateToken(User user) {
-
         return Jwts.builder()
                 .subject(user.getUsername())
                 .issuedAt(new Date())
@@ -47,7 +46,6 @@ public class JwtCrudService implements JwtService {
 
     @Override
     public boolean isTokenValid(String token, User user) {
-
         return extractUsername(token).equals(user.getUsername());
     }
 }
