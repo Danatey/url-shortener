@@ -1,16 +1,16 @@
 package org.example.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import org.example.config.ApiPaths;
 import org.example.dto.AuthResponseDto;
 import org.example.dto.LoginRequestDto;
+import org.example.dto.RegisterRequestDto;
 import org.example.service.AuthCrudService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth")
+@RequestMapping(ApiPaths.API_V1 + "/auth")
 public class AuthController {
 
     private final AuthCrudService authCrudService;
@@ -19,8 +19,16 @@ public class AuthController {
         this.authCrudService = authCrudService;
     }
 
+    @Operation(summary = "Login user")
     @PostMapping("/login")
     public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authCrudService.login(request));
+    }
+
+    @Operation(summary = "Register new user")
+    @PostMapping("/register")
+    public ResponseEntity<Integer> register(@RequestBody RegisterRequestDto request) {
+        authCrudService.register(request);
+        return ResponseEntity.ok(201);
     }
 }

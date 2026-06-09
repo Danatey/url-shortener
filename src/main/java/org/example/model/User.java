@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -24,6 +25,7 @@ public class User {
     @Column(nullable = false, unique = true)
     private String username;
 
+    @Size(min = 8)
     @Column(nullable = false)
     private String password;
 

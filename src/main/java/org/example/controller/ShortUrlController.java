@@ -1,6 +1,9 @@
 package org.example.controller;
 
+import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.example.config.ApiPaths;
 import org.example.dto.CreateShortUrlRequestDto;
 import org.example.dto.UrlResponseDto;
 import org.example.service.UrlCrudService;
@@ -11,14 +14,15 @@ import java.util.List;
 import java.util.UUID;
 
 @RestController
-@RequestMapping("/short-url")
+@RequestMapping(ApiPaths.API_V1 + "/short-url")
 @RequiredArgsConstructor
 public class ShortUrlController {
 
     private final UrlCrudService urlCrudService;
 
+    @Operation(summary = "Create short URL")
     @PostMapping
-    public UrlResponseDto create(@RequestBody CreateShortUrlRequestDto request) {
+    public UrlResponseDto create(@Valid @RequestBody CreateShortUrlRequestDto request) {
 
         String username = SecurityContextHolder.getContext()
                 .getAuthentication()
@@ -27,6 +31,7 @@ public class ShortUrlController {
         return urlCrudService.create(request, username);
     }
 
+    @Operation(summary = "Get all short URLs")
     @GetMapping
     public List<UrlResponseDto> getAllUserUrls() {
 
@@ -37,11 +42,13 @@ public class ShortUrlController {
         return urlCrudService.getAllUserUrls(username);
     }
 
+    @Operation(summary = "Get short URL")
     @GetMapping("/{shortCode}")
     public UrlResponseDto getByShortCode(@PathVariable String shortCode) {
         return urlCrudService.getByShortCode(shortCode);
     }
 
+    @Operation(summary = "Delete URL")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
 
@@ -52,8 +59,10 @@ public class ShortUrlController {
         urlCrudService.delete(id, username);
     }
 
-    @GetMapping("/r/{shortCode}")
-    public String redirect(@PathVariable String shortCode) {
-        return urlCrudService.redirect(shortCode);
+    @GetMapping("/test-auth")
+    public String test() {
+        return SecurityContextHolder.getContext()
+                .getAuthentication()
+                .getName();
     }
 }
