@@ -4,6 +4,7 @@ import org.example.model.User;
 import io.jsonwebtoken.Jwts;
 import org.springframework.beans.factory.annotation.Value;
 import io.jsonwebtoken.security.Keys;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -45,7 +46,8 @@ public class JwtCrudService implements JwtService {
     }
 
     @Override
-    public boolean isTokenValid(String token, User user) {
-        return extractUsername(token).equals(user.getUsername());
+    public boolean isTokenValid(String token, UserDetails userDetails) {
+        String username = extractUsername(token);
+        return username.equals(userDetails.getUsername());
     }
 }

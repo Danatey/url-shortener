@@ -17,8 +17,7 @@ public class RedirectController {
     private final UrlService urlService;
 
     @GetMapping("/r/{shortCode}")
-    public ResponseEntity<Void> redirect(
-            @PathVariable String shortCode) {
+    public ResponseEntity<Void> redirect(@PathVariable String shortCode) {
 
         String originalUrl = urlService.redirect(shortCode);
 

@@ -7,7 +7,9 @@ import org.example.model.ShortUrl;
 import org.example.model.User;
 import org.example.repository.ShortUrlRepository;
 import org.example.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -74,10 +76,19 @@ public class UrlCrudService implements UrlService {
     public String redirect(String shortCode) {
 
         ShortUrl url = shortUrlRepository.findByShortCode(shortCode)
-                .orElseThrow();
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Short URL not found"
+                ));
+
+        if (url.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new ResponseStatusException(
+                    HttpStatus.GONE,
+                    "Link expired"
+            );
+        }
 
         url.setClickCount(url.getClickCount() + 1);
-
         shortUrlRepository.save(url);
 
         return url.getOriginalUrl();

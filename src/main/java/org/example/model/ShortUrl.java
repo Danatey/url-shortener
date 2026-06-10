@@ -16,6 +16,8 @@ import java.util.UUID;
 public class ShortUrl {
 
     @Id
+    @GeneratedValue
+    @org.hibernate.annotations.UuidGenerator
     private UUID id;
 
     @Column(name = "short_code", nullable = false, unique = true)
