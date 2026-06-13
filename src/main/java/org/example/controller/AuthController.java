@@ -1,11 +1,13 @@
 package org.example.controller;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 import org.example.config.ApiPaths;
 import org.example.dto.AuthResponseDto;
 import org.example.dto.LoginRequestDto;
 import org.example.dto.RegisterRequestDto;
 import org.example.service.AuthCrudService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -21,14 +23,17 @@ public class AuthController {
 
     @Operation(summary = "Login user")
     @PostMapping("/login")
-    public ResponseEntity<AuthResponseDto> login(@RequestBody LoginRequestDto request) {
+    public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody LoginRequestDto request) {
         return ResponseEntity.ok(authCrudService.login(request));
     }
 
     @Operation(summary = "Register new user")
     @PostMapping("/register")
-    public ResponseEntity<Integer> register(@RequestBody RegisterRequestDto request) {
+    public ResponseEntity<AuthResponseDto> register(@Valid @RequestBody RegisterRequestDto request) {
         authCrudService.register(request);
-        return ResponseEntity.ok(201);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .build();
     }
 }

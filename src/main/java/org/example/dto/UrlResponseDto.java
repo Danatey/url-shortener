@@ -1,14 +1,14 @@
 package org.example.dto;
 
-import lombok.Builder;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
 @Setter
+@AllArgsConstructor
+@NoArgsConstructor
 @Builder
 public class UrlResponseDto {
     private UUID id;
@@ -16,6 +16,8 @@ public class UrlResponseDto {
     private String originalUrl;
 
     private String shortCode;
+
+    private String shortUrl;
 
     private Long clickCount;
 

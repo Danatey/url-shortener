@@ -4,9 +4,9 @@ import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.example.config.ApiPaths;
-import org.example.dto.CreateShortUrlRequestDto;
-import org.example.dto.UrlResponseDto;
-import org.example.service.UrlCrudService;
+import org.example.dto.*;
+import org.example.service.UrlService;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,49 +18,59 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class ShortUrlController {
 
-    private final UrlCrudService urlCrudService;
+    private final UrlService urlService;
 
     @Operation(summary = "Create short URL")
     @PostMapping
     public UrlResponseDto create(@Valid @RequestBody CreateShortUrlRequestDto request) {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return urlCrudService.create(request, username);
+        String username = getUsername();
+        return urlService.create(request, username);
     }
 
-    @Operation(summary = "Get all short URLs")
+    @Operation(summary = "Get all user URLs")
     @GetMapping
-    public List<UrlResponseDto> getAllUserUrls() {
+    public List<UrlResponseDto> getAll() {
 
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return urlCrudService.getAllUserUrls(username);
+        String username = getUsername();
+        return urlService.getAllUserUrls(username);
     }
 
-    @Operation(summary = "Get short URL")
+    @Operation(summary = "Get by short code")
     @GetMapping("/{shortCode}")
-    public UrlResponseDto getByShortCode(@PathVariable String shortCode) {
-        return urlCrudService.getByShortCode(shortCode);
+    public UrlResponseDto getByShortCode(
+            @PathVariable String shortCode,
+            Authentication authentication
+    ) {
+        return urlService.getByShortCode(shortCode, authentication.getName());
+    }
+
+    @Operation(summary = "Update URL (PUT)")
+    @PutMapping("/{id}")
+    public UrlResponseDto update(
+            @PathVariable UUID id,
+            @Valid @RequestBody UpdateShortUrlRequestDto request
+    ) {
+        return urlService.update(id, request, getUsername());
+    }
+
+    @Operation(summary = "Patch URL (PATCH)")
+    @PatchMapping("/{id}")
+    public UrlResponseDto patch(
+            @PathVariable UUID id,
+            @RequestBody PatchShortUrlRequestDto request
+    ) {
+        return urlService.patch(id, request, getUsername());
     }
 
     @Operation(summary = "Delete URL")
     @DeleteMapping("/{id}")
     public void delete(@PathVariable UUID id) {
-
-        String username = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        urlCrudService.delete(id, username);
+        urlService.delete(id, getUsername());
     }
 
-    @GetMapping("/test-auth")
-    public String test() {
+
+    private String getUsername() {
         return SecurityContextHolder.getContext()
                 .getAuthentication()
                 .getName();

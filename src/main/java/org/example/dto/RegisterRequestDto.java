@@ -12,6 +12,7 @@ public class RegisterRequestDto {
     @NotBlank
     private String username;
 
+    @NotBlank
     @Pattern(
             regexp = "^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d).{8,}$",
             message = "Password must contain at least 8 characters, upper/lower case letters and digits"
