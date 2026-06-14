@@ -27,14 +27,14 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     private ShortUrlRepository shortUrlRepository;
 
     private User createUser() {
-        return userRepository.save(User.builder()
+        return userRepository.saveAndFlush(User.builder()
                 .username("testUser")
                 .password("pass")
                 .build());
     }
 
     private ShortUrl createUrl(User user, String shortCode, LocalDateTime expiresAt) {
-        return shortUrlRepository.save(ShortUrl.builder()
+        return shortUrlRepository.saveAndFlush(ShortUrl.builder()
                 .originalUrl("https://google.com")
                 .shortCode(shortCode)
                 .clickCount(0L)
