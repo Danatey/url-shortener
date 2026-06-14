@@ -27,9 +27,9 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     private ShortUrlRepository shortUrlRepository;
 
     private User createUser() {
-        return userRepository.saveAndFlush(User.builder()
+        return userRepository.save(User.builder()
                 .username("testUser")
-                .password("pass")
+                .password("Pass1234")
                 .build());
     }
 
