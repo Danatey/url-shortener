@@ -10,21 +10,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_DB: url_shortener
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd="pg_isready -U postgres"
-          --health-interval=10s
-          --health-timeout=5s
-          --health-retries=5
-
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,17 +20,23 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Setup Docker (required for Testcontainers)
+        uses: docker/setup-buildx-action@v3
+
       - name: Cache Gradle
         uses: gradle/actions/setup-gradle@v3
 
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      - name: Build and verify
+      - name: Run tests (Testcontainers will start PostgreSQL)
         env:
-          SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/url_shortener
-          SPRING_DATASOURCE_USERNAME: postgres
-          SPRING_DATASOURCE_PASSWORD: postgres
           JWT_SECRET: my-super-secret-key-my-super-secret-key
           APP_BASE_URL: http://localhost:8080
-        run: ./gradlew clean build
+        run: ./gradlew clean test
+
+      - name: Build project
+        run: ./gradlew build
+
+      - name: Run JaCoCo coverage check
+        run: ./gradlew jacocoTestCoverageVerification
