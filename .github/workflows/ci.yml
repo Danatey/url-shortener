@@ -11,8 +11,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Fix gradlew permissions
+        run: chmod +x gradlew
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -23,5 +26,17 @@ jobs:
       - name: Setup Docker (for Testcontainers)
         uses: docker/setup-buildx-action@v3
 
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v3
+
       - name: Run tests
-        run: ./gradlew test
+        env:
+          JWT_SECRET: my-super-secret-key-my-super-secret-key
+          APP_BASE_URL: http://localhost:8080
+        run: ./gradlew clean test
+
+      - name: Build project
+        run: ./gradlew build
+
+      - name: Run coverage
+        run: ./gradlew jacocoTestCoverageVerification
