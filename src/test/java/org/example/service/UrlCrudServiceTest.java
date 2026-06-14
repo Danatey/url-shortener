@@ -26,13 +26,28 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Autowired
     private ShortUrlRepository shortUrlRepository;
 
-    @Test
-    void shouldCreateShortUrlWhenRequestIsValid() {
-
-        User user = userRepository.save(User.builder()
+    private User createUser() {
+        return userRepository.save(User.builder()
                 .username("testUser")
                 .password("pass")
                 .build());
+    }
+
+    private ShortUrl createUrl(User user, String shortCode, LocalDateTime expiresAt) {
+        return shortUrlRepository.save(ShortUrl.builder()
+                .originalUrl("https://google.com")
+                .shortCode(shortCode)
+                .clickCount(0L)
+                .user(user)
+                .createdAt(LocalDateTime.now())
+                .expiresAt(expiresAt)
+                .build());
+    }
+
+    @Test
+    void shouldCreateShortUrlWhenRequestIsValid() {
+
+        User user = createUser();
 
         CreateShortUrlRequestDto request = new CreateShortUrlRequestDto();
         request.setOriginalUrl("https://google.com");
@@ -43,26 +58,15 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
         assertNotNull(result);
         assertEquals("https://google.com", result.getOriginalUrl());
         assertNotNull(result.getShortCode());
-
         assertEquals(1, shortUrlRepository.count());
     }
 
     @Test
     void shouldReturnAllUserUrls() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("https://google.com")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
         var result = urlCrudService.getAllUserUrls(user.getUsername());
 
@@ -72,19 +76,9 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldGetByShortCodeWhenOwner() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        ShortUrl url = shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("https://google.com")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        ShortUrl url = createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
         UrlResponseDto result =
                 urlCrudService.getByShortCode(url.getShortCode(), user.getUsername());
@@ -95,19 +89,9 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldUpdateUrlWhenUserIsOwner() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        ShortUrl url = shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("old")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        ShortUrl url = createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
         UpdateShortUrlRequestDto request = new UpdateShortUrlRequestDto();
         request.setOriginalUrl("new");
@@ -121,19 +105,9 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldPatchUrlWhenPartialDataIsProvided() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        ShortUrl url = shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("old")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        ShortUrl url = createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
         PatchShortUrlRequestDto request = new PatchShortUrlRequestDto();
         request.setOriginalUrl("patched");
@@ -147,19 +121,9 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldDeleteUrlWhenOwner() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        ShortUrl url = shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("https://google.com")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        ShortUrl url = createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
         urlCrudService.delete(url.getId(), user.getUsername());
 
@@ -169,21 +133,11 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldRedirectAndIncrementClickCount() {
 
-        User user = userRepository.save(User.builder()
-                .username("testUser")
-                .password("pass")
-                .build());
+        User user = createUser();
 
-        ShortUrl url = shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("https://google.com")
-                .shortCode("abc123")
-                .clickCount(0L)
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .expiresAt(LocalDateTime.now().plusDays(1))
-                .build());
+        createUrl(user, "abc123", LocalDateTime.now().plusDays(1));
 
-        String result = urlCrudService.redirect(url.getShortCode());
+        String result = urlCrudService.redirect("abc123");
 
         assertEquals("https://google.com", result);
     }
@@ -191,12 +145,11 @@ class UrlCrudServiceTest extends AbstractIntegrationTest {
     @Test
     void shouldThrowWhenRedirectExpired() {
 
-        shortUrlRepository.save(ShortUrl.builder()
-                .originalUrl("https://google.com")
-                .shortCode("abc123")
-                .expiresAt(LocalDateTime.now().minusDays(1))
-                .clickCount(0L)
-                .build());
+        createUrl(
+                createUser(),
+                "abc123",
+                LocalDateTime.now().minusDays(1)
+        );
 
         assertThrows(RuntimeException.class,
                 () -> urlCrudService.redirect("abc123"));
