@@ -23,4 +23,6 @@ public interface UrlService {
     UrlResponseDto patch(UUID id, PatchShortUrlRequestDto request, String username);
 
     String redirect(String shortCode);
+
+    List<UrlResponseDto> getActiveUserUrls(String username);
 }

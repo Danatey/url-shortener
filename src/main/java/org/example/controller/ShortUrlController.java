@@ -69,6 +69,14 @@ public class ShortUrlController {
         urlService.delete(id, getUsername());
     }
 
+    @Operation(summary = "Get all active user URLs")
+    @GetMapping("/active")
+    public List<UrlResponseDto> getActive() {
+
+        String username = getUsername();
+        return urlService.getActiveUserUrls(username);
+    }
+
 
     private String getUsername() {
         return SecurityContextHolder.getContext()

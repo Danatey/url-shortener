@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.example.dto.AuthResponseDto;
 import org.example.dto.LoginRequestDto;
 import org.example.dto.RegisterRequestDto;
+import org.example.exception.InvalidCredentialsException;
 import org.example.model.User;
 import org.example.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -35,13 +36,13 @@ public class AuthCrudService implements AuthService {
     @Override
     public AuthResponseDto login(LoginRequestDto request) {
         User user = userRepository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new RuntimeException("Invalid username or password"));
+                .orElseThrow(() -> new InvalidCredentialsException("Invalid username or password"));
 
         if (!passwordEncoder.matches(
                 request.getPassword(),
                 user.getPassword())) {
 
-            throw new RuntimeException("Invalid username or password");
+            throw new InvalidCredentialsException("Invalid username or password");
         }
 
         String token = jwtService.generateToken(user);

@@ -10,7 +10,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -49,8 +53,73 @@ class UrlCrudServiceTest {
 
         UrlResponseDto result = urlCrudService.create(request, "testUser");
 
-        assertNotNull(result);
         assertEquals("https://google.com", result.getOriginalUrl());
+        assertNotNull(result.getShortCode());
+    }
+
+    @Test
+    void shouldReturnAllUserUrls() {
+
+        ShortUrl url = ShortUrl.builder()
+                .id(UUID.randomUUID())
+                .originalUrl("https://google.com")
+                .shortCode("abc123")
+                .clickCount(0L)
+                .build();
+
+        when(shortUrlRepository.findAllByUserUsername("testUser"))
+                .thenReturn(List.of(url));
+
+        var result = urlCrudService.getAllUserUrls("testUser");
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void shouldReturnActiveUserUrls() {
+
+        ShortUrl url = ShortUrl.builder()
+                .originalUrl("https://google.com")
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .build();
+
+        when(shortUrlRepository.findAllByUserUsername("testUser"))
+                .thenReturn(List.of(url));
+
+        var result = urlCrudService.getActiveUserUrls("testUser");
+
+        assertEquals(1, result.size());
+    }
+
+    @Test
+    void shouldGetByShortCodeWhenOwner() {
+
+        User user = User.builder()
+                .username("testUser")
+                .build();
+
+        ShortUrl url = ShortUrl.builder()
+                .shortCode("abc123")
+                .originalUrl("https://google.com")
+                .user(user)
+                .build();
+
+        when(shortUrlRepository.findByShortCode("abc123"))
+                .thenReturn(Optional.of(url));
+
+        var result = urlCrudService.getByShortCode("abc123", "testUser");
+
+        assertEquals("https://google.com", result.getOriginalUrl());
+    }
+
+    @Test
+    void shouldThrowWhenShortCodeNotFound() {
+
+        when(shortUrlRepository.findByShortCode("abc"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(RuntimeException.class,
+                () -> urlCrudService.getByShortCode("abc", "testUser"));
     }
 
     @Test
@@ -59,7 +128,6 @@ class UrlCrudServiceTest {
         UUID id = UUID.randomUUID();
 
         User user = User.builder()
-                .id(UUID.randomUUID())
                 .username("testUser")
                 .build();
 
@@ -89,7 +157,6 @@ class UrlCrudServiceTest {
         UUID id = UUID.randomUUID();
 
         User user = User.builder()
-                .id(UUID.randomUUID())
                 .username("testUser")
                 .build();
 
@@ -114,26 +181,81 @@ class UrlCrudServiceTest {
     }
 
     @Test
-    void shouldThrowNotFoundExceptionWhenUrlDoesNotExist() {
+    void shouldDeleteUrlWhenOwner() {
 
         UUID id = UUID.randomUUID();
 
-        when(shortUrlRepository.findById(id))
-                .thenReturn(Optional.empty());
+        User user = User.builder()
+                .username("testUser")
+                .build();
 
-        assertThrows(RuntimeException.class,
-                () -> urlCrudService.update(id,
-                        new UpdateShortUrlRequestDto(),
-                        "testUser"));
+        ShortUrl url = ShortUrl.builder()
+                .id(id)
+                .user(user)
+                .build();
+
+        when(shortUrlRepository.findById(id))
+                .thenReturn(Optional.of(url));
+
+        urlCrudService.delete(id, "testUser");
+
+        verify(shortUrlRepository).delete(url);
     }
 
     @Test
-    void shouldThrowAccessDeniedExceptionWhenUserIsNotOwner() {
+    void shouldRedirectAndIncrementClickCount() {
+
+        ShortUrl url = ShortUrl.builder()
+                .shortCode("abc123")
+                .originalUrl("https://google.com")
+                .clickCount(0L)
+                .expiresAt(LocalDateTime.now().plusDays(1))
+                .build();
+
+        when(shortUrlRepository.findByShortCode("abc123"))
+                .thenReturn(Optional.of(url));
+
+        when(shortUrlRepository.incrementClickCount("abc123"))
+                .thenReturn(1);
+
+        String result = urlCrudService.redirect("abc123");
+
+        assertEquals("https://google.com", result);
+
+        verify(shortUrlRepository).incrementClickCount("abc123");
+    }
+
+    @Test
+    void shouldThrowWhenRedirectExpired() {
+
+        ShortUrl url = ShortUrl.builder()
+                .shortCode("abc123")
+                .expiresAt(LocalDateTime.now().minusDays(1))
+                .build();
+
+        when(shortUrlRepository.findByShortCode("abc123"))
+                .thenReturn(Optional.of(url));
+
+        assertThrows(ResponseStatusException.class,
+                () -> urlCrudService.redirect("abc123"));
+    }
+
+    @Test
+    void shouldThrowWhenRedirectNotFound() {
+
+        when(shortUrlRepository.findByShortCode("abc123"))
+                .thenReturn(Optional.empty());
+
+        assertThrows(ResponseStatusException.class,
+                () -> urlCrudService.redirect("abc123"));
+    }
+
+    @Test
+    void shouldThrowWhenNotOwnerOnUpdate() {
 
         UUID id = UUID.randomUUID();
 
         User owner = User.builder()
-                .id(UUID.randomUUID())
                 .username("owner")
                 .build();
 
@@ -148,6 +270,6 @@ class UrlCrudServiceTest {
         assertThrows(RuntimeException.class,
                 () -> urlCrudService.update(id,
                         new UpdateShortUrlRequestDto(),
-                        "testUser"));
+                        "otherUser"));
     }
 }

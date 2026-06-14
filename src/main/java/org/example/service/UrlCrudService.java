@@ -25,14 +25,16 @@ public class UrlCrudService implements UrlService {
     private final ShortUrlRepository shortUrlRepository;
     private final UserRepository userRepository;
 
-    @Value("${APP_BASE_URL}")
+    @Value("${app.base-url}")
     private String baseUrl;
 
     @Override
     public UrlResponseDto create(CreateShortUrlRequestDto request, String username) {
 
         User user = userRepository.findByUsername(username)
-                .orElseThrow();
+                .orElseThrow(() ->
+                        new ResponseStatusException(HttpStatus.NOT_FOUND, "User not found")
+                );
 
         ShortUrl shortUrl = ShortUrl.builder()
                 .originalUrl(request.getOriginalUrl())
@@ -113,13 +115,29 @@ public class UrlCrudService implements UrlService {
                         "Short URL not found"
                 ));
 
-        if (url.getExpiresAt().isBefore(LocalDateTime.now())) {
+        if (url.getExpiresAt() != null &&
+                url.getExpiresAt().isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(HttpStatus.GONE, "Link expired");
         }
 
         shortUrlRepository.incrementClickCount(shortCode);
 
         return url.getOriginalUrl();
+    }
+
+    @Override
+    public List<UrlResponseDto> getActiveUserUrls(String username) {
+
+        LocalDateTime now = LocalDateTime.now();
+
+        return shortUrlRepository.findAllByUserUsername(username)
+                .stream()
+                .filter(url ->
+                        url.getExpiresAt() == null ||
+                                url.getExpiresAt().isAfter(now)
+                )
+                .map(this::map)
+                .toList();
     }
 
     private ShortUrl getOwnedUrl(UUID id, String username) {
